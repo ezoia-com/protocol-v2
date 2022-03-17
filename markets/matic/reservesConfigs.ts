@@ -1,5 +1,6 @@
 // import BigNumber from 'bignumber.js';
 // import { oneRay } from '../../helpers/constants';
+import { MAX_BORROW_CAP } from '../../helpers/constants';
 import { eContractid, IReserveParams } from '../../helpers/types';
 import {
   rateStrategyStableTwo,
@@ -20,6 +21,7 @@ export const strategyDAI: IReserveParams = {
   reserveDecimals: '18',
   aTokenImpl: eContractid.AToken,
   reserveFactor: '1000',
+  borrowCap: MAX_BORROW_CAP,
 };
 
 export const strategyUSDC: IReserveParams = {
@@ -32,18 +34,20 @@ export const strategyUSDC: IReserveParams = {
   reserveDecimals: '6',
   aTokenImpl: eContractid.AToken,
   reserveFactor: '1000',
+  borrowCap: MAX_BORROW_CAP,
 };
 
 export const strategyUSDT: IReserveParams = {
-  strategy: rateStrategyStableThree,
-  baseLTVAsCollateral: '0',
-  liquidationThreshold: '0',
-  liquidationBonus: '0',
-  borrowingEnabled: true,
-  stableBorrowRateEnabled: false,
-  reserveDecimals: '6',
-  aTokenImpl: eContractid.AToken,
-  reserveFactor: '1000',
+    strategy: rateStrategyStableThree,
+    baseLTVAsCollateral: '8000',
+    liquidationThreshold: '8500',
+    liquidationBonus: '10500',
+    borrowingEnabled: true,
+    stableBorrowRateEnabled: true,
+    reserveDecimals: '6',
+    aTokenImpl: eContractid.AToken,
+    reserveFactor: '1000',
+    borrowCap: MAX_BORROW_CAP,
 };
 
 export const strategyWETH: IReserveParams = {
@@ -56,6 +60,7 @@ export const strategyWETH: IReserveParams = {
   reserveDecimals: '18',
   aTokenImpl: eContractid.AToken,
   reserveFactor: '1000',
+  borrowCap: MAX_BORROW_CAP,
 };
 
 export const strategyWBTC: IReserveParams = {
@@ -68,6 +73,7 @@ export const strategyWBTC: IReserveParams = {
   reserveDecimals: '8',
   aTokenImpl: eContractid.AToken,
   reserveFactor: '2000',
+  borrowCap: MAX_BORROW_CAP,
 };
 
 export const strategyMATIC: IReserveParams = {
@@ -91,5 +97,6 @@ export const strategyAAVE: IReserveParams = {
   stableBorrowRateEnabled: false,
   reserveDecimals: '18',
   aTokenImpl: eContractid.AToken,
-  reserveFactor: '0',
+  reserveFactor: '2000',
+  borrowCap: MAX_BORROW_CAP,
 };

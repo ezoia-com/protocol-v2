@@ -14,6 +14,8 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {Errors} from '../helpers/Errors.sol';
 import {Helpers} from '../helpers/Helpers.sol';
 import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
+import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
+import {IStableDebtToken} from '../../../interfaces/IStableDebtToken.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 
 /**
@@ -96,6 +98,8 @@ library ValidationLogic {
     uint256 userBorrowBalanceETH;
     uint256 availableLiquidity;
     uint256 healthFactor;
+    uint256 totalSupplyStableDebt;
+    uint256 totalSupplyVariableDebt;
     bool isActive;
     bool isFrozen;
     bool borrowingEnabled;
@@ -149,6 +153,22 @@ library ValidationLogic {
         uint256(DataTypes.InterestRateMode.STABLE) == interestRateMode,
       Errors.VL_INVALID_INTEREST_RATE_MODE_SELECTED
     );
+    
+    (vars.totalSupplyStableDebt, ) = IStableDebtToken(reserve.stableDebtTokenAddress)
+      .getTotalSupplyAndAvgRate();
+
+    vars.totalSupplyVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
+          .scaledTotalSupply()
+          .rayMul(reserve.variableBorrowIndex);
+        
+      
+    require(
+      vars.totalSupplyStableDebt
+        .add(vars.totalSupplyVariableDebt)
+        .add(amount)
+        .div(10 ** reserve.configuration.getDecimals())
+        < reserve.configuration.getBorrowCap(),
+      Errors.VL_BORROW_CAP_EXCEEDED);
 
     (
       vars.userCollateralBalanceETH,

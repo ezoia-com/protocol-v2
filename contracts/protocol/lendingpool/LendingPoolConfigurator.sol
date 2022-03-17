@@ -149,7 +149,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset);
 
-    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
+    (, , , uint256 decimals, , ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
 
     bytes memory encodedCall = abi.encodeWithSelector(
         IInitializableAToken.initialize.selector,
@@ -180,7 +180,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset);
      
-    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
+    (, , , uint256 decimals, , ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
 
     bytes memory encodedCall = abi.encodeWithSelector(
         IInitializableDebtToken.initialize.selector,
@@ -217,7 +217,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset);
 
-    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
+    (, , , uint256 decimals, , ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
 
     bytes memory encodedCall = abi.encodeWithSelector(
         IInitializableDebtToken.initialize.selector,
@@ -248,13 +248,14 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
    * @param asset The address of the underlying asset of the reserve
    * @param stableBorrowRateEnabled True if stable borrow rate needs to be enabled by default on this reserve
    **/
-  function enableBorrowingOnReserve(address asset, bool stableBorrowRateEnabled)
+  function enableBorrowingOnReserve(address asset, uint256 borrowCap, bool stableBorrowRateEnabled)
     external
     onlyPoolAdmin
   {
     DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
     currentConfig.setBorrowingEnabled(true);
+    currentConfig.setBorrowCap(borrowCap);
     currentConfig.setStableRateBorrowingEnabled(stableBorrowRateEnabled);
 
     pool.setConfiguration(asset, currentConfig.data);
@@ -428,6 +429,21 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     pool.setConfiguration(asset, currentConfig.data);
 
     emit ReserveFactorChanged(asset, reserveFactor);
+  }
+
+  /**
+   * @dev Updates the borrow cap of a reserve
+   * @param asset The address of the underlying asset of the reserve
+   * @param borrowCap The new borrow of the reserve
+   **/
+  function setBorrowCap(address asset, uint256 borrowCap) external onlyPoolAdmin {
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+
+    currentConfig.setBorrowCap(borrowCap);
+
+    pool.setConfiguration(asset, currentConfig.data);
+
+    emit BorrowCapChanged(asset, borrowCap);
   }
 
   /**

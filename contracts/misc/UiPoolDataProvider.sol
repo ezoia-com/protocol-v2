@@ -294,7 +294,8 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
         reserveData.reserveLiquidationThreshold,
         reserveData.reserveLiquidationBonus,
         reserveData.decimals,
-        reserveData.reserveFactor
+        reserveData.reserveFactor,
+        reserveData.borrowCap
       ) = baseData.configuration.getParamsMemory();
       (
         reserveData.isActive,

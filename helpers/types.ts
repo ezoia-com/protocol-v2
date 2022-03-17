@@ -189,6 +189,8 @@ export enum ProtocolErrors {
   RC_INVALID_DECIMALS = '70',
   RC_INVALID_RESERVE_FACTOR = '71',
   LPAPR_INVALID_ADDRESSES_PROVIDER_ID = '72',
+  VL_BORROW_CAP_EXCEEDED = '81',
+  RC_INVALID_BORROW_CAP = '82',
 
   // old
 
@@ -404,6 +406,7 @@ export interface IReserveCollateralParams {
   baseLTVAsCollateral: string;
   liquidationThreshold: string;
   liquidationBonus: string;
+  borrowCap: string;
 }
 export interface IMarketRates {
   borrowRate: string;

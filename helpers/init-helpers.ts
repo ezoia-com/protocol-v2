@@ -199,6 +199,12 @@ export const configureReservesByHelper = async (
   const atokenAndRatesDeployer = await getATokensAndRatesHelper();
   const tokens: string[] = [];
   const symbols: string[] = [];
+  const baseLTVA: string[] = [];
+  const liquidationThresholds: string[] = [];
+  const liquidationBonuses: string[] = [];
+  const reserveFactors: string[] = [];
+  const borrowCaps: string[] = [];
+  const stableRatesEnabled: boolean[] = [];
 
   const inputParams: {
     asset: string;
@@ -206,6 +212,7 @@ export const configureReservesByHelper = async (
     liquidationThreshold: BigNumberish;
     liquidationBonus: BigNumberish;
     reserveFactor: BigNumberish;
+    borrowCap: BigNumberish;
     stableBorrowingEnabled: boolean;
     borrowingEnabled: boolean;
   }[] = [];
@@ -217,6 +224,7 @@ export const configureReservesByHelper = async (
       liquidationBonus,
       liquidationThreshold,
       reserveFactor,
+      borrowCap,
       stableBorrowRateEnabled,
       borrowingEnabled,
     },
@@ -248,15 +256,22 @@ export const configureReservesByHelper = async (
     inputParams.push({
       asset: tokenAddress,
       baseLTV: baseLTVAsCollateral,
-      liquidationThreshold: liquidationThreshold,
-      liquidationBonus: liquidationBonus,
-      reserveFactor: reserveFactor,
+      liquidationThreshold,
+      liquidationBonus,
+      reserveFactor,
+      borrowCap,
       stableBorrowingEnabled: stableBorrowRateEnabled,
       borrowingEnabled: borrowingEnabled,
     });
 
     tokens.push(tokenAddress);
     symbols.push(assetSymbol);
+    baseLTVA.push(baseLTVAsCollateral);
+    liquidationThresholds.push(liquidationThreshold);
+    liquidationBonuses.push(liquidationBonus);
+    reserveFactors.push(reserveFactor);
+    borrowCaps.push(borrowCap);
+    stableRatesEnabled.push(stableBorrowRateEnabled);
   }
   if (tokens.length) {
     // Set aTokenAndRatesDeployer as temporal admin

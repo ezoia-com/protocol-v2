@@ -80,17 +80,27 @@ contract AaveProtocolDataProvider {
       bool isFrozen
     )
   {
-    DataTypes.ReserveConfigurationMap memory configuration =
+     DataTypes.ReserveConfigurationMap memory configuration =
       ILendingPool(ADDRESSES_PROVIDER.getLendingPool()).getConfiguration(asset);
 
-    (ltv, liquidationThreshold, liquidationBonus, decimals, reserveFactor) = configuration
-      .getParamsMemory();
+    (ltv, liquidationThreshold, liquidationBonus, decimals, reserveFactor, ) = 
+      configuration.getParamsMemory();
 
-    (isActive, isFrozen, borrowingEnabled, stableBorrowRateEnabled) = configuration
-      .getFlagsMemory();
+    (isActive, isFrozen, borrowingEnabled, stableBorrowRateEnabled) =
+      configuration.getFlagsMemory();
 
     usageAsCollateralEnabled = liquidationThreshold > 0;
   }
+
+  function getReserveBorrowCap(address asset)
+    external
+    view
+    returns (uint256 borrowCap) {
+
+      (, , , , , borrowCap) = ILendingPool(ADDRESSES_PROVIDER.getLendingPool())
+        .getConfiguration(asset)
+        .getParamsMemory();
+    }
 
   function getReserveData(address asset)
     external
