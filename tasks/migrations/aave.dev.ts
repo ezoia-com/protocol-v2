@@ -4,7 +4,7 @@ import { ConfigNames } from '../../helpers/configuration';
 import { printContracts } from '../../helpers/misc-utils';
 
 task('aave:dev', 'Deploy development enviroment')
-  .addOptionalParam('verify', 'Verify contracts at Etherscan')
+  .addFlag('verify', 'Verify contracts at Etherscan')
   .setAction(async ({ verify }, localBRE) => {
     const POOL_NAME = ConfigNames.Aave;
 
@@ -24,12 +24,15 @@ task('aave:dev', 'Deploy development enviroment')
     await localBRE.run('dev:deploy-address-provider', { verify });
 
     console.log('3. Deploy lending pool');
-    await localBRE.run('dev:deploy-lending-pool', { verify });
+    await localBRE.run('dev:deploy-lending-pool', { verify, pool: POOL_NAME });
 
     console.log('4. Deploy oracles');
     await localBRE.run('dev:deploy-oracles', { verify, pool: POOL_NAME });
 
-    console.log('5. Initialize lending pool');
+    console.log('5. Deploy WETH Gateway');
+    await localBRE.run('full-deploy-weth-gateway', { verify, pool: POOL_NAME });
+
+    console.log('6. Initialize lending pool');
     await localBRE.run('dev:initialize-lending-pool', { verify, pool: POOL_NAME });
 
     console.log('\nFinished migration');

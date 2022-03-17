@@ -7,9 +7,9 @@ import { waitForTx, notFalsyOrZeroAddress } from '../../helpers/misc-utils';
 import {
   ConfigNames,
   loadPoolConfig,
-  getWethAddress,
   getGenesisPoolAdmin,
   getLendingRateOracles,
+  getQuoteCurrency,
 } from '../../helpers/configuration';
 import {
   getAaveOracle,
@@ -17,7 +17,7 @@ import {
   getLendingRateOracle,
   getPairsTokenAggregator,
 } from '../../helpers/contracts-getters';
-import { AaveOracle } from '../../types';
+import { AaveOracle, LendingRateOracle } from '../../types';
 
 task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
   .addFlag('verify', 'Verify contracts at Etherscan')
@@ -46,41 +46,48 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
         ...reserveAssets,
         USD: UsdAddress,
       };
-      const [tokens, aggregators] = getPairsTokenAggregator(tokensToWatch, chainlinkAggregators);
+      const [tokens, aggregators] = getPairsTokenAggregator(
+        tokensToWatch,
+        chainlinkAggregators,
+        poolConfig.OracleQuoteCurrency
+      );
 
       let aaveOracle: AaveOracle;
+      let lendingRateOracle: LendingRateOracle;
+
       if (notFalsyOrZeroAddress(aaveOracleAddress)) {
         aaveOracle = await await getAaveOracle(aaveOracleAddress);
-        const owner = await aaveOracle.owner();
-        const signer = DRE.ethers.provider.getSigner(owner);
-
-        aaveOracle = await (await getAaveOracle(aaveOracleAddress)).connect(signer);
         await waitForTx(await aaveOracle.setAssetSources(tokens, aggregators));
       } else {
         aaveOracle = await deployAaveOracle(
-          [tokens, aggregators, fallbackOracleAddress, await getWethAddress(poolConfig)],
+          [
+            tokens,
+            aggregators,
+            fallbackOracleAddress,
+            await getQuoteCurrency(poolConfig),
+            poolConfig.OracleQuoteUnit,
+          ],
           verify
+        );
+        await waitForTx(await aaveOracle.setAssetSources(tokens, aggregators));
+      }
+
+      if (notFalsyOrZeroAddress(lendingRateOracleAddress)) {
+        lendingRateOracle = await getLendingRateOracle(lendingRateOracleAddress);
+      } else {
+        lendingRateOracle = await deployLendingRateOracle(verify);
+        const { USD, ...tokensAddressesWithoutUsd } = tokensToWatch;
+        await setInitialMarketRatesInRatesOracleByHelper(
+          lendingRateOracles,
+          tokensAddressesWithoutUsd,
+          lendingRateOracle,
+          admin
         );
       }
 
-      let lendingRateOracle = notFalsyOrZeroAddress(lendingRateOracleAddress)
-        ? await getLendingRateOracle(lendingRateOracleAddress)
-        : await deployLendingRateOracle(verify);
-      const { USD, ...tokensAddressesWithoutUsd } = tokensToWatch;
+      console.log('Aave Oracle: %s', aaveOracle.address);
+      console.log('Lending Rate Oracle: %s', lendingRateOracle.address);
 
-      lendingRateOracle = lendingRateOracle.connect(
-        DRE.ethers.provider.getSigner(await lendingRateOracle.owner())
-      );
-      // This must be done any time a new market is created I believe
-      //if (!lendingRateOracleAddress) {
-      await setInitialMarketRatesInRatesOracleByHelper(
-        lendingRateOracles,
-        tokensAddressesWithoutUsd,
-        lendingRateOracle,
-        admin
-      );
-      //}
-      console.log('ORACLES: %s and %s', aaveOracle.address, lendingRateOracle.address);
       // Register the proxy price provider on the addressesProvider
       await waitForTx(await addressesProvider.setPriceOracle(aaveOracle.address));
       await waitForTx(await addressesProvider.setLendingRateOracle(lendingRateOracle.address));
@@ -88,7 +95,7 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
       if (DRE.network.name.includes('tenderly')) {
         const transactionLink = `https://dashboard.tenderly.co/${DRE.config.tenderly.username}/${
           DRE.config.tenderly.project
-        }/fork/${DRE.tenderlyRPC.getFork()}/simulation/${DRE.tenderlyRPC.getHead()}`;
+        }/fork/${DRE.tenderly.network().getFork()}/simulation/${DRE.tenderly.network().getHead()}`;
         console.error('Check tx error:', transactionLink);
       }
       throw error;

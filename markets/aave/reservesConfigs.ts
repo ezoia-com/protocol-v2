@@ -1,7 +1,7 @@
 import { MAX_BORROW_CAP } from '../../helpers/constants';
 import { eContractid, IReserveParams } from '../../helpers/types';
 
-import { 
+import {
   rateStrategyStableOne,
   rateStrategyStableTwo,
   rateStrategyStableThree,

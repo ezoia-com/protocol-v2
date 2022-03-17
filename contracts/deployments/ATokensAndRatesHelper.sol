@@ -33,6 +33,7 @@ contract ATokensAndRatesHelper is Ownable {
     uint256 reserveFactor;
     uint256 borrowCap;
     bool stableBorrowingEnabled;
+    bool borrowingEnabled;
   }
 
   constructor(

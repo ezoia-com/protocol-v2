@@ -3,6 +3,7 @@ pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
+import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
 
 interface IUiPoolDataProvider {
   struct AggregatedReserveData {
@@ -42,12 +43,17 @@ interface IUiPoolDataProvider {
     uint256 variableRateSlope2;
     uint256 stableRateSlope1;
     uint256 stableRateSlope2;
+    // incentives
+    uint256 aEmissionPerSecond;
+    uint256 vEmissionPerSecond;
+    uint256 sEmissionPerSecond;
+    uint256 aIncentivesLastUpdateTimestamp;
+    uint256 vIncentivesLastUpdateTimestamp;
+    uint256 sIncentivesLastUpdateTimestamp;
+    uint256 aTokenIncentivesIndex;
+    uint256 vTokenIncentivesIndex;
+    uint256 sTokenIncentivesIndex;
   }
-  //
-  //  struct ReserveData {
-  //    uint256 averageStableBorrowRate;
-  //    uint256 totalLiquidity;
-  //  }
 
   struct UserReserveData {
     address underlyingAsset;
@@ -57,38 +63,49 @@ interface IUiPoolDataProvider {
     uint256 scaledVariableDebt;
     uint256 principalStableDebt;
     uint256 stableBorrowLastUpdateTimestamp;
+    // incentives
+    uint256 aTokenincentivesUserIndex;
+    uint256 vTokenincentivesUserIndex;
+    uint256 sTokenincentivesUserIndex;
   }
 
-  //
-  //  struct ATokenSupplyData {
-  //    string name;
-  //    string symbol;
-  //    uint8 decimals;
-  //    uint256 totalSupply;
-  //    address aTokenAddress;
-  //  }
+  struct IncentivesControllerData {
+    uint256 userUnclaimedRewards;
+    uint256 emissionEndTimestamp;
+  }
 
+  function getReservesList(ILendingPoolAddressesProvider provider)
+    external
+    view
+    returns (address[] memory);
+
+  function incentivesController() external view returns (IAaveIncentivesController);
+
+  function getSimpleReservesData(ILendingPoolAddressesProvider provider)
+    external
+    view
+    returns (
+      AggregatedReserveData[] memory,
+      uint256, // usd price eth
+      uint256 // emission end timestamp
+    );
+
+  function getUserReservesData(ILendingPoolAddressesProvider provider, address user)
+    external
+    view
+    returns (
+      UserReserveData[] memory,
+      uint256 // user unclaimed rewards
+    );
+
+  // generic method with full data
   function getReservesData(ILendingPoolAddressesProvider provider, address user)
     external
     view
     returns (
       AggregatedReserveData[] memory,
       UserReserveData[] memory,
-      uint256
+      uint256,
+      IncentivesControllerData memory
     );
-
-  //  function getUserReservesData(ILendingPoolAddressesProvider provider, address user)
-  //    external
-  //    view
-  //    returns (UserReserveData[] memory);
-  //
-  //  function getAllATokenSupply(ILendingPoolAddressesProvider provider)
-  //    external
-  //    view
-  //    returns (ATokenSupplyData[] memory);
-  //
-  //  function getATokenSupply(address[] calldata aTokens)
-  //    external
-  //    view
-  //    returns (ATokenSupplyData[] memory);
 }

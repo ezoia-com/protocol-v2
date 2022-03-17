@@ -1,6 +1,7 @@
 import { task } from 'hardhat/config';
 import { getParamPerNetwork, insertContractAddressInDb } from '../../helpers/contracts-helpers';
 import {
+  deployATokenImplementations,
   deployATokensAndRatesHelper,
   deployLendingPool,
   deployLendingPoolConfigurator,
@@ -34,6 +35,7 @@ task('full:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
         console.log('\tDeploying new lending pool implementation & libraries...');
         const lendingPoolImpl = await deployLendingPool(verify);
         lendingPoolImplAddress = lendingPoolImpl.address;
+        await lendingPoolImpl.initialize(addressesProvider.address);
       }
       console.log('\tSetting lending pool implementation with address:', lendingPoolImplAddress);
       // Set lending pool impl to Address provider
@@ -68,6 +70,10 @@ task('full:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
         eContractid.LendingPoolConfigurator,
         lendingPoolConfiguratorProxy.address
       );
+
+      // Pause market during deployment
+      await waitForTx(await lendingPoolConfiguratorProxy.setPoolPause(true));
+
       // Deploy deployment helpers
       await deployStableAndVariableTokensHelper(
         [lendingPoolProxy.address, addressesProvider.address],
@@ -77,11 +83,12 @@ task('full:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
         [lendingPoolProxy.address, addressesProvider.address, lendingPoolConfiguratorProxy.address],
         verify
       );
+      await deployATokenImplementations(pool, poolConfig.ReservesConfig, verify);
     } catch (error) {
       if (DRE.network.name.includes('tenderly')) {
         const transactionLink = `https://dashboard.tenderly.co/${DRE.config.tenderly.username}/${
           DRE.config.tenderly.project
-        }/fork/${DRE.tenderlyRPC.getFork()}/simulation/${DRE.tenderlyRPC.getHead()}`;
+        }/fork/${DRE.tenderly.network().getFork()}/simulation/${DRE.tenderly.network().getHead()}`;
         console.error('Check tx error:', transactionLink);
       }
       throw error;
